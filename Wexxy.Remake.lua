@@ -550,7 +550,7 @@ function Library:CreateGroupbox(parent, title, tab)
         if multi and type(default) == "table" then for _, value in ipairs(default) do table.insert(selected, value) end end
         local frame = row(name, "Dropdown", 66); Corner(frame, 8)
         local titleLabel = label(frame, name, -24); titleLabel.Size = UDim2.new(1, -24, 0, 25)
-        local box = Create("TextButton", {Parent = frame, BackgroundColor3 = Theme.Background, BorderSizePixel = 0, Position = UDim2.fromOffset(8, 27), Size = UDim2.new(1, -16, 0, 31), Font = Theme.Font, TextColor3 = Theme.TextDark, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false}); Corner(box, 7); Padding(box, 10, 24)
+        local box = Create("TextButton", {Parent = frame, BackgroundColor3 = Theme.Background, BorderSizePixel = 0, Position = UDim2.fromOffset(8, 27), Size = UDim2.new(1, -16, 0, 31), Font = Theme.Font, TextColor3 = Theme.TextDark, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, TextWrapped = false, ClipsDescendants = true, AutoButtonColor = false}); Corner(box, 7); Padding(box, 10, 28)
         local arrow = Create("TextLabel", {Parent = box, BackgroundTransparency = 1, Position = UDim2.new(1, -23, 0, 0), Size = UDim2.fromOffset(20, 31), Font = Enum.Font.GothamBold, Text = "+", TextColor3 = Theme.TextDark, TextSize = 14})
         local list = Create("Frame", {Parent = frame, BackgroundColor3 = Theme.BackgroundDark, BorderSizePixel = 0, Position = UDim2.fromOffset(8, 64), Size = UDim2.new(1, -16, 0, 0), ClipsDescendants = true, Visible = false, ZIndex = 10}); Corner(list, 8); Stroke(list, Theme.Outline)
         local find = Create("TextBox", {Parent = list, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 0, 28), Font = Theme.Font, PlaceholderText = "Search options...", PlaceholderColor3 = Theme.TextDark, Text = "", TextColor3 = Theme.Text, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, ZIndex = 11}); Corner(find, 6); Stroke(find, Theme.Outline, .2); Padding(find, 9)
@@ -593,6 +593,7 @@ function Library:CreateGroupbox(parent, title, tab)
         local function setOpen(value)
             opened = value; arrow.Text = value and "−" or "+"
             if value then
+                render()
                 list.Visible = true; list.Size = UDim2.new(1, -16, 0, 0)
                 Tween(frame, {Size = UDim2.new(1, 0, 0, 226)}, .24)
                 Tween(list, {Size = UDim2.new(1, -16, 0, 154)}, .24)
@@ -628,7 +629,7 @@ function Library:CreateGroupbox(parent, title, tab)
         local bar = Create("Frame", {Parent = frame, BackgroundColor3 = Color3.fromRGB(48, 46, 59), BorderSizePixel = 0, Position = UDim2.fromOffset(12, 38), Size = UDim2.new(1, -24, 0, 5)}); Corner(bar, 3)
         local fill = Create("Frame", {Parent = bar, BackgroundColor3 = Theme.Accent, BorderSizePixel = 0, Size = UDim2.new(0, 0, 1, 0)}); Corner(fill, 3)
         local knob = Create("Frame", {Parent = fill, BackgroundColor3 = Theme.Text, AnchorPoint = Vector2.new(.5, .5), Position = UDim2.new(1, 0, .5, 0), Size = UDim2.fromOffset(11, 11), ZIndex = 3}); Corner(knob, 6); Stroke(knob, Theme.Accent, .1)
-        local hit = Create("TextButton", {Parent = bar, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, -7), Size = UDim2.new(1, 0, 1, 14), Text = ""})
+        local hit = Create("TextButton", {Parent = bar, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, -7), Size = UDim2.new(1, 0, 1, 14), Text = "", ZIndex = 4})
         local dragging, object = false, {}
         hit.MouseEnter:Connect(function() Tween(knob, {Size = UDim2.fromOffset(14, 14)}, .14) end)
         hit.MouseLeave:Connect(function() if not dragging then Tween(knob, {Size = UDim2.fromOffset(11, 11)}, .14) end end)
@@ -644,10 +645,14 @@ function Library:CreateGroupbox(parent, title, tab)
             Tween(valueLabel, {TextColor3 = Theme.TextDark}, .15)
             object:SetValue(tonumber(valueLabel.Text:match("-?[%d%.]+")) or value)
         end)
-        local function update(input) object:SetValue(math.floor((minimum + (maximum - minimum) * math.clamp((input.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)) * 100) / 100) end
-        hit.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; update(input) end end)
-        UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-        UserInputService.InputChanged:Connect(function(input) if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then update(input) end end)
+        local function update(input)
+            local percent = math.clamp((input.Position.X - bar.AbsolutePosition.X) / math.max(bar.AbsoluteSize.X, 1), 0, 1)
+            local increment = options.Increment or .01
+            object:SetValue(math.floor((minimum + (maximum - minimum) * percent) / increment + .5) * increment)
+        end
+        hit.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = true; update(input) end end)
+        UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false; Tween(knob, {Size = UDim2.fromOffset(11, 11)}, .12) end end)
+        UserInputService.InputChanged:Connect(function(input) if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then update(input) end end)
         Library.ConfigRegistry[options.Flag or name] = {Type = "Slider", Set = function(newValue) object:SetValue(newValue) end, Get = function() return value end, Default = options.Default or minimum}
         object:SetValue(value); return chain(object)
     end
