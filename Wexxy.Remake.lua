@@ -1,5 +1,4 @@
--- remake v2.2
-
+-- v2.3
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -47,6 +46,34 @@ end
 
 local function Tween(object, properties, duration)
     TweenService:Create(object, TweenInfo.new(duration or .18, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), properties):Play()
+end
+
+local function AnimateInput(textBox, options)
+    options = options or {}
+    local scale = Create("UIScale", {Parent = textBox, Scale = 1})
+    local strokeObj = options.Stroke
+    local strokeDefaultColor = options.StrokeColor or Theme.Outline
+    local strokeDefaultTransparency = options.StrokeTransparency or 0
+    local icon = options.Icon
+    textBox.Focused:Connect(function()
+        Tween(scale, {Scale = 1.015}, .2)
+        if strokeObj then Tween(strokeObj, {Color = Theme.Accent, Transparency = 0}, .2) end
+        if icon then Tween(icon, {ImageColor3 = Theme.Accent}, .2) end
+    end)
+    textBox.FocusLost:Connect(function()
+        Tween(scale, {Scale = 1}, .2)
+        if strokeObj then Tween(strokeObj, {Color = strokeDefaultColor, Transparency = strokeDefaultTransparency}, .2) end
+        if icon then Tween(icon, {ImageColor3 = Theme.TextDark}, .2) end
+    end)
+    textBox:GetPropertyChangedSignal("Text"):Connect(function()
+        if textBox:IsFocused() then
+            Tween(scale, {Scale = 1.022}, .06)
+            task.delay(.06, function()
+                if textBox:IsFocused() then Tween(scale, {Scale = 1.015}, .09) end
+            end)
+        end
+    end)
+    return scale
 end
 
 local function MakeDraggable(handle, object)
@@ -248,8 +275,9 @@ function Library:CreateWindow(options)
     local pageTitle = Create("TextLabel", {Parent = header, BackgroundTransparency = 1, Position = UDim2.fromOffset(24, 13), Size = UDim2.new(1, -260, 0, 24), Font = Enum.Font.GothamBold, Text = "Dashboard", TextColor3 = Theme.Text, TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left})
     local pageDesc = Create("TextLabel", {Parent = header, BackgroundTransparency = 1, Position = UDim2.fromOffset(24, 40), Size = UDim2.new(1, -260, 0, 18), Font = Theme.Font, Text = "Manage your modules and settings", TextColor3 = Theme.TextDark, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left})
     local search = Create("TextBox", {Parent = header, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.new(1, -222, .5, -18), Size = UDim2.fromOffset(198, 36), Font = Theme.Font, PlaceholderText = "Search controls...", PlaceholderColor3 = Theme.TextDark, Text = "", TextColor3 = Theme.Text, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false})
-    Corner(search, 9); Stroke(search); Padding(search, 30, 10)
+    Corner(search, 9); local searchStroke = Stroke(search); Padding(search, 30, 10)
     local searchIcon = Create("ImageLabel", {Parent = search, BackgroundTransparency = 1, Position = UDim2.fromOffset(-18, 11), Size = UDim2.fromOffset(14, 14), Image = "rbxassetid://6031154871", ImageColor3 = Theme.TextDark, ScaleType = Enum.ScaleType.Fit})
+    AnimateInput(search, {Stroke = searchStroke, Icon = searchIcon})
     local content = Create("Frame", {Parent = main, BackgroundTransparency = 1, Position = UDim2.fromOffset(210, 78), Size = UDim2.new(1, -210, 1, -78), ClipsDescendants = true})
     local collapse = Create("TextButton", {Parent = main, BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.new(0, 205, .5, -30), Size = UDim2.fromOffset(10, 60), Font = Enum.Font.GothamBold, Text = "|", TextColor3 = Theme.TextDark, TextSize = 18, AutoButtonColor = false, ZIndex = 20})
     local collapseScale = Create("UIScale", {Parent = collapse, Scale = 1})
@@ -562,7 +590,8 @@ function Library:CreateGroupbox(parent, title, tab)
         local box = Create("TextButton", {Parent = frame, BackgroundColor3 = Theme.Background, BorderSizePixel = 0, Position = UDim2.fromOffset(8, 27), Size = UDim2.new(1, -16, 0, 31), Font = Theme.Font, TextColor3 = Theme.TextDark, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, TextWrapped = false, ClipsDescendants = true, AutoButtonColor = false}); Corner(box, 7); Padding(box, 10, 28)
         local arrow = Create("TextLabel", {Parent = box, BackgroundTransparency = 1, Position = UDim2.new(1, -23, 0, 0), Size = UDim2.fromOffset(20, 31), Font = Enum.Font.GothamBold, Text = "+", TextColor3 = Theme.TextDark, TextSize = 14})
         local list = Create("Frame", {Parent = frame, BackgroundColor3 = Theme.BackgroundDark, BorderSizePixel = 0, Position = UDim2.fromOffset(8, 64), Size = UDim2.new(1, -16, 0, 0), ClipsDescendants = true, Visible = false, ZIndex = 10}); Corner(list, 8); Stroke(list, Theme.Outline)
-        local find = Create("TextBox", {Parent = list, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 0, 28), Font = Theme.Font, PlaceholderText = "Search options...", PlaceholderColor3 = Theme.TextDark, Text = "", TextColor3 = Theme.Text, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, ZIndex = 11}); Corner(find, 6); Stroke(find, Theme.Outline, .2); Padding(find, 9)
+        local find = Create("TextBox", {Parent = list, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 0, 28), Font = Theme.Font, PlaceholderText = "Search options...", PlaceholderColor3 = Theme.TextDark, Text = "", TextColor3 = Theme.Text, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, ZIndex = 11}); Corner(find, 6); local findStroke = Stroke(find, Theme.Outline, .2); Padding(find, 9)
+        AnimateInput(find, {Stroke = findStroke, StrokeTransparency = .2})
         -- Add All / Clear All buttons
         local btnRow = Create("Frame", {Parent = list, BackgroundTransparency = 1, Position = UDim2.fromOffset(6, 38), Size = UDim2.new(1, -12, 0, 22), ZIndex = 11})
         local addAllBtn = Create("TextButton", {Parent = btnRow, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.fromOffset(0, 0), Size = UDim2.new(.5, -2, 1, 0), Font = Enum.Font.GothamMedium, Text = "Add All", TextColor3 = Theme.Success, TextSize = 9, AutoButtonColor = false, ZIndex = 12}); Corner(addAllBtn, 5)
@@ -749,12 +778,9 @@ function Library:CreateGroupbox(parent, title, tab)
         options = options or {}; local frame = row(name, "Textbox", 66); Corner(frame, 8)
         local titleLabel = label(frame, options.Text or name, -24); titleLabel.Size = UDim2.new(1, -24, 0, 27)
         local input = Create("TextBox", {Parent = frame, BackgroundColor3 = Theme.Background, BorderSizePixel = 0, Position = UDim2.fromOffset(8, 28), Size = UDim2.new(1, -16, 0, 30), Font = Theme.Font, Text = options.Default or "", PlaceholderText = options.Placeholder or "Enter text...", PlaceholderColor3 = Theme.TextDark, TextColor3 = Theme.Text, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false}); Corner(input, 6); Padding(input, 9)
-        local inputScale = Create("UIScale", {Parent = input, Scale = 1})
-        input.Focused:Connect(function() Tween(input, {BackgroundColor3 = Theme.Surface}, .18); Tween(inputScale, {Scale = 1.012}, .18) end)
-        input.FocusLost:Connect(function() Tween(input, {BackgroundColor3 = Theme.Background}, .18); Tween(inputScale, {Scale = 1}, .18) end)
-        input:GetPropertyChangedSignal("Text"):Connect(function()
-            if input:IsFocused() then Tween(inputScale, {Scale = 1.018}, .06); task.delay(.06, function() if input:IsFocused() then Tween(inputScale, {Scale = 1.012}, .09) end end) end
-        end)
+        AnimateInput(input)
+        input.Focused:Connect(function() Tween(input, {BackgroundColor3 = Theme.Surface}, .18) end)
+        input.FocusLost:Connect(function() Tween(input, {BackgroundColor3 = Theme.Background}, .18) end)
         local mask
         if options.Sensor or options.sensor then
             input.TextTransparency = 1
