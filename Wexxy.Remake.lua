@@ -1,4 +1,4 @@
--- remake v2
+-- remake v2.1
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -247,7 +247,8 @@ function Library:CreateWindow(options)
     local pageTitle = Create("TextLabel", {Parent = header, BackgroundTransparency = 1, Position = UDim2.fromOffset(24, 13), Size = UDim2.new(1, -260, 0, 24), Font = Enum.Font.GothamBold, Text = "Dashboard", TextColor3 = Theme.Text, TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left})
     local pageDesc = Create("TextLabel", {Parent = header, BackgroundTransparency = 1, Position = UDim2.fromOffset(24, 40), Size = UDim2.new(1, -260, 0, 18), Font = Theme.Font, Text = "Manage your modules and settings", TextColor3 = Theme.TextDark, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left})
     local search = Create("TextBox", {Parent = header, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.new(1, -222, .5, -18), Size = UDim2.fromOffset(198, 36), Font = Theme.Font, PlaceholderText = "Search controls...", PlaceholderColor3 = Theme.TextDark, Text = "", TextColor3 = Theme.Text, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false})
-    Corner(search, 9); Stroke(search); Padding(search, 14, 10)
+    Corner(search, 9); Stroke(search); Padding(search, 30, 10)
+    local searchIcon = Create("ImageLabel", {Parent = search, BackgroundTransparency = 1, Position = UDim2.fromOffset(-18, 8), Size = UDim2.fromOffset(14, 14), Image = "rbxassetid://6031154871", ImageColor3 = Theme.TextDark, ScaleType = Enum.ScaleType.Fit})
     local content = Create("Frame", {Parent = main, BackgroundTransparency = 1, Position = UDim2.fromOffset(210, 78), Size = UDim2.new(1, -210, 1, -78), ClipsDescendants = true})
     local collapse = Create("TextButton", {Parent = main, BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.new(0, 205, .5, -30), Size = UDim2.fromOffset(10, 60), Font = Enum.Font.GothamBold, Text = "|", TextColor3 = Theme.TextDark, TextSize = 18, AutoButtonColor = false, ZIndex = 20})
     local collapseScale = Create("UIScale", {Parent = collapse, Scale = 1})
