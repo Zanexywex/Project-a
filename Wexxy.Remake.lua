@@ -1,4 +1,4 @@
---- Remake V1
+-- remake v2
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -492,10 +492,16 @@ function Library:CreateGroupbox(parent, title, tab)
             local knob = Create("Frame", {Parent = sliderFill, BackgroundColor3 = Theme.Text, AnchorPoint = Vector2.new(.5, .5), Position = UDim2.new(1, 0, .5, 0), Size = UDim2.fromOffset(11, 11), ZIndex = 3}); Corner(knob, 6); Stroke(knob, Theme.Accent, .1)
             local sliderHit = Create("TextButton", {Parent = sliderBar, BackgroundTransparency = 1, Position = UDim2.fromOffset(0, -8), Size = UDim2.new(1, 0, 1, 16), Text = "", ZIndex = 4})
             local dragging, sliderObject = false, {}
+            local function formatSliderValue(val)
+                if val == math.floor(val) then return tostring(math.floor(val)) end
+                local s = string.format("%.2f", val)
+                s = s:gsub("0+$", ""):gsub("%.$", "")
+                return s
+            end
             function sliderObject:SetValue(newValue)
                 sliderValue = math.clamp(tonumber(newValue) or minimum, minimum, maximum)
-                local percent = (sliderValue - minimum) / math.max(maximum - minimum, 1)
-                valueBox.Text = tostring(sliderValue) .. (sliderOptions.Suffix or "")
+                local percent = (sliderValue - minimum) / math.max(maximum - minimum, 0.001)
+                valueBox.Text = formatSliderValue(sliderValue) .. (sliderOptions.Suffix or "")
                 Tween(sliderFill, {Size = UDim2.new(percent, 0, 1, 0)}, .1)
                 Library:SafeCallback(sliderOptions.Callback, sliderValue)
             end
@@ -555,7 +561,15 @@ function Library:CreateGroupbox(parent, title, tab)
         local arrow = Create("TextLabel", {Parent = box, BackgroundTransparency = 1, Position = UDim2.new(1, -23, 0, 0), Size = UDim2.fromOffset(20, 31), Font = Enum.Font.GothamBold, Text = "+", TextColor3 = Theme.TextDark, TextSize = 14})
         local list = Create("Frame", {Parent = frame, BackgroundColor3 = Theme.BackgroundDark, BorderSizePixel = 0, Position = UDim2.fromOffset(8, 64), Size = UDim2.new(1, -16, 0, 0), ClipsDescendants = true, Visible = false, ZIndex = 10}); Corner(list, 8); Stroke(list, Theme.Outline)
         local find = Create("TextBox", {Parent = list, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.fromOffset(6, 6), Size = UDim2.new(1, -12, 0, 28), Font = Theme.Font, PlaceholderText = "Search options...", PlaceholderColor3 = Theme.TextDark, Text = "", TextColor3 = Theme.Text, TextSize = 10, TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false, ZIndex = 11}); Corner(find, 6); Stroke(find, Theme.Outline, .2); Padding(find, 9)
-        local choices = Create("ScrollingFrame", {Parent = list, BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.fromOffset(6, 40), Size = UDim2.new(1, -12, 1, -46), CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 2, ZIndex = 11})
+        -- Add All / Clear All buttons
+        local btnRow = Create("Frame", {Parent = list, BackgroundTransparency = 1, Position = UDim2.fromOffset(6, 38), Size = UDim2.new(1, -12, 0, 22), ZIndex = 11})
+        local addAllBtn = Create("TextButton", {Parent = btnRow, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.fromOffset(0, 0), Size = UDim2.new(.5, -2, 1, 0), Font = Enum.Font.GothamMedium, Text = "Add All", TextColor3 = Theme.Success, TextSize = 9, AutoButtonColor = false, ZIndex = 12}); Corner(addAllBtn, 5)
+        local clearAllBtn = Create("TextButton", {Parent = btnRow, BackgroundColor3 = Theme.Surface, BorderSizePixel = 0, Position = UDim2.new(.5, 2, 0, 0), Size = UDim2.new(.5, -2, 1, 0), Font = Enum.Font.GothamMedium, Text = "Clear All", TextColor3 = Color3.fromRGB(255, 100, 100), TextSize = 9, AutoButtonColor = false, ZIndex = 12}); Corner(clearAllBtn, 5)
+        addAllBtn.MouseEnter:Connect(function() Tween(addAllBtn, {BackgroundColor3 = Theme.AccentDark}, .12) end)
+        addAllBtn.MouseLeave:Connect(function() Tween(addAllBtn, {BackgroundColor3 = Theme.Surface}, .12) end)
+        clearAllBtn.MouseEnter:Connect(function() Tween(clearAllBtn, {BackgroundColor3 = Theme.AccentDark}, .12) end)
+        clearAllBtn.MouseLeave:Connect(function() Tween(clearAllBtn, {BackgroundColor3 = Theme.Surface}, .12) end)
+        local choices = Create("ScrollingFrame", {Parent = list, BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.fromOffset(6, 64), Size = UDim2.new(1, -12, 1, -70), CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 2, ZIndex = 11})
         Create("UIListLayout", {Parent = choices, Padding = UDim.new(0, 3)})
         local opened, optionButtons = false, {}
         local object = {}
@@ -586,18 +600,39 @@ function Library:CreateGroupbox(parent, title, tab)
                         for index, current in ipairs(selected) do if current == value then table.remove(selected, index); found = true; break end end
                         if not found then table.insert(selected, value) end
                     else selected = value; opened = false end
+                    find.Text = ""
                     display(); Library:SafeCallback(callback, selected)
                     if opened then render() else list.Visible = false; frame.Size = UDim2.new(1, 0, 0, 66); arrow.Text = "+" end
                 end)
             end
         end
+        -- Add All / Clear All button logic
+        addAllBtn.MouseButton1Click:Connect(function()
+            if multi then
+                selected = {}
+                for _, value in ipairs(options) do table.insert(selected, value) end
+            else
+                if #options > 0 then selected = options[1] end
+            end
+            display(); Library:SafeCallback(callback, selected)
+            if opened then render() end
+        end)
+        clearAllBtn.MouseButton1Click:Connect(function()
+            if multi then
+                selected = {}
+            else
+                selected = nil
+            end
+            display(); Library:SafeCallback(callback, selected)
+            if opened then render() end
+        end)
         local function setOpen(value)
             opened = value; arrow.Text = value and "−" or "+"
             if value then
                 render()
                 list.Visible = true; list.Size = UDim2.new(1, -16, 0, 0)
-                Tween(frame, {Size = UDim2.new(1, 0, 0, 226)}, .24)
-                Tween(list, {Size = UDim2.new(1, -16, 0, 154)}, .24)
+                Tween(frame, {Size = UDim2.new(1, 0, 0, 250)}, .24)
+                Tween(list, {Size = UDim2.new(1, -16, 0, 178)}, .24)
                 Tween(arrow, {Rotation = 180}, .2); find:CaptureFocus()
             else
                 find.Text = ""
@@ -634,10 +669,16 @@ function Library:CreateGroupbox(parent, title, tab)
         local dragging, object = false, {}
         hit.MouseEnter:Connect(function() Tween(knob, {Size = UDim2.fromOffset(14, 14)}, .14) end)
         hit.MouseLeave:Connect(function() if not dragging then Tween(knob, {Size = UDim2.fromOffset(11, 11)}, .14) end end)
+        local function formatSliderVal(val)
+            if val == math.floor(val) then return tostring(math.floor(val)) end
+            local s = string.format("%.2f", val)
+            s = s:gsub("0+$", ""):gsub("%.$", "")
+            return s
+        end
         function object:SetValue(newValue)
             value = math.clamp(tonumber(newValue) or minimum, minimum, maximum)
-            valueLabel.Text = tostring(value) .. (options.Suffix or "")
-            fill.Size = UDim2.new((value - minimum) / math.max(maximum - minimum, 1), 0, 1, 0)
+            valueLabel.Text = formatSliderVal(value) .. (options.Suffix or "")
+            fill.Size = UDim2.new((value - minimum) / math.max(maximum - minimum, 0.001), 0, 1, 0)
             Library:SafeCallback(options.Callback, value)
         end
         function object:GetValue() return value end
