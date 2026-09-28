@@ -1,4 +1,5 @@
--- v 2.5
+-- v2.6
+
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -318,7 +319,7 @@ function Library:CreateWindow(options)
     if old then old:Destroy() end
 
     local gui = Create("ScreenGui", {Name = "ProjectARemake", Parent = parent, ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling})
-    local main = Create("CanvasGroup", {Name = "Main", Parent = gui, BackgroundColor3 = Theme.Background, BackgroundTransparency = .28, BorderSizePixel = 0, Position = UDim2.new(.5, -390, .5, -250), Size = UDim2.fromOffset(780, 540), ClipsDescendants = true, GroupTransparency = 1})
+    local main = Create("Frame", {Name = "Main", Parent = gui, BackgroundColor3 = Theme.Background, BackgroundTransparency = .28, BorderSizePixel = 0, Position = UDim2.new(.5, -390, .5, -250), Size = UDim2.fromOffset(780, 540), ClipsDescendants = true, Visible = false})
     Corner(main, 16); Stroke(main, Theme.Outline, .25)
     local fadeBackground = Create("Frame", {Parent = main, BackgroundColor3 = Theme.Background, BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromScale(1, 1), ZIndex = 1})
     Create("UIGradient", {Parent = fadeBackground, Rotation = 90, Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.fromRGB(31, 20, 52)), ColorSequenceKeypoint.new(.22, Theme.Background), ColorSequenceKeypoint.new(1, Color3.fromRGB(9, 9, 15))})})
@@ -472,11 +473,11 @@ function Library:CreateWindow(options)
         self.Visible = state; visibilityToken += 1
         local token = visibilityToken
         if state then
-            main.Visible = true; main.GroupTransparency = 1; mainScale.Scale = responsiveScale * .92
-            Tween(main, {GroupTransparency = 0}, .25); Tween(mainScale, {Scale = responsiveScale}, .3)
+            main.Visible = true; mainScale.Scale = responsiveScale * .92
+            Tween(mainScale, {Scale = responsiveScale}, .3)
         else
             for _, popup in ipairs(Library.Popups) do if popup and popup.Parent then popup.Visible = false end end
-            Tween(main, {GroupTransparency = 1}, .2); Tween(mainScale, {Scale = responsiveScale * .92}, .2)
+            Tween(mainScale, {Scale = responsiveScale * .92}, .2)
             task.delay(.21, function() if token == visibilityToken and not self.Visible then main.Visible = false end end)
         end
     end
@@ -502,13 +503,11 @@ function Library:CreateWindow(options)
         window.CurrentTab = tab
         tab.Frame.Visible = true
         tab.Frame.Position = UDim2.fromOffset(18, 20)
-        tab.Canvas.GroupTransparency = 1
         tab.Bar.Visible = true; tab.Bar.Size = UDim2.fromOffset(3, 0); tab.Bar.Position = UDim2.new(0, 0, .5, 0)
         Tween(tab.Button, {BackgroundTransparency = 0, BackgroundColor3 = Theme.AccentDark, TextColor3 = Theme.Text})
         Tween(tab.ButtonScale, {Scale = 1.02}, .16)
         Tween(tab.Bar, {Size = UDim2.fromOffset(3, 24), Position = UDim2.new(0, 0, .5, -12)}, .24)
         Tween(tab.Frame, {Position = UDim2.fromOffset(18, 14)}, .25)
-        Tween(tab.Canvas, {GroupTransparency = 0}, .3)
         pageTitle.Text, pageDesc.Text = tab.Name, tab.Description
         pageTitle.TextTransparency = 0.5; pageDesc.TextTransparency = 0.5
         Tween(pageTitle, {TextTransparency = 0}, .25); Tween(pageDesc, {TextTransparency = 0}, .25)
@@ -523,11 +522,11 @@ function Library:CreateWindow(options)
         local bar = Create("Frame", {Parent = button, BackgroundColor3 = Theme.Accent, BorderSizePixel = 0, Position = UDim2.new(0, 0, .5, -12), Size = UDim2.fromOffset(3, 24), Visible = false})
         Corner(bar, 2)
         local frame = Create("ScrollingFrame", {Parent = content, BackgroundTransparency = 1, BorderSizePixel = 0, Position = UDim2.fromOffset(18, 14), Size = UDim2.new(1, -36, 1, -28), CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 3, ScrollBarImageColor3 = Theme.Accent, Visible = false})
-        local columns = Create("CanvasGroup", {Parent = frame, BackgroundTransparency = 1, Size = UDim2.new(1, -5, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, GroupTransparency = 0})
+        local columns = Create("Frame", {Parent = frame, BackgroundTransparency = 1, Size = UDim2.new(1, -5, 0, 0), AutomaticSize = Enum.AutomaticSize.Y})
         local left = Create("Frame", {Parent = columns, BackgroundTransparency = 1, Size = UDim2.new(.5, -7, 0, 0), AutomaticSize = Enum.AutomaticSize.Y})
         local right = Create("Frame", {Parent = columns, BackgroundTransparency = 1, Position = UDim2.new(.5, 7, 0, 0), Size = UDim2.new(.5, -7, 0, 0), AutomaticSize = Enum.AutomaticSize.Y})
         Create("UIListLayout", {Parent = left, Padding = UDim.new(0, 12)}); Create("UIListLayout", {Parent = right, Padding = UDim.new(0, 12)})
-        local tab = {Name = name, Description = tabOptions.Description or "Manage your modules and settings", Button = button, ButtonScale = buttonScale, Bar = bar, Frame = frame, Canvas = columns, Controls = {}}
+        local tab = {Name = name, Description = tabOptions.Description or "Manage your modules and settings", Button = button, ButtonScale = buttonScale, Bar = bar, Frame = frame, Controls = {}}
         function tab:AddLeftGroupbox(groupName) return Library:CreateGroupbox(left, groupName, tab) end
         function tab:AddRightGroupbox(groupName) return Library:CreateGroupbox(right, groupName, tab) end
         function tab:AddGroupbox(groupName, side) return Library:CreateGroupbox(side == "Right" and right or left, groupName, tab) end
@@ -589,7 +588,8 @@ function Library:CreateWindow(options)
     end
     Library.Window = window
     mainScale.Scale = responsiveScale * .92
-    Tween(main, {GroupTransparency = 0}, .42); Tween(mainScale, {Scale = responsiveScale}, .42)
+    main.Visible = true
+    Tween(mainScale, {Scale = responsiveScale}, .42)
     return window
 end
 
