@@ -1,4 +1,5 @@
--- v2.7
+-- v2.8
+
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -1474,31 +1475,5 @@ function Library:FinishLoader()
     loader.TryStart()
 end
 
-Library:AddBuiltinSettingsTab()
-
-Library:Notify(
-    "Wexxy Protect",
-    "โหลด UI สำเร็จ",
-    4
-)
-
-Window:SetVisible(true)
-Window:Toggle()
-
-Library:UpdateTheme(
-    "Accent",
-    Color3.fromRGB(130, 82, 255)
-)
-
-Library:SaveConfig("default")
-Library:LoadConfig("default")
-Library:SetDefaultConfig()
-
-local configs = Library:GetConfigs()
-
-for _, configName in ipairs(configs) do
-    print(configName)
-end
-Library:FinishLoader()
 
 return Library
